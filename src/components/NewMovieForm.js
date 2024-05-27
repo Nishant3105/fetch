@@ -1,7 +1,7 @@
 import React,{useCallback, useState} from 'react'
 import classes from './NewMovieForm.module.css'
 
-const NewMovieForm = () => {
+const NewMovieForm = (props) => {
     const [formData,setFormData]=useState({
         title:'',
         openingText:'',
@@ -15,22 +15,15 @@ const NewMovieForm = () => {
         }))
     },[])
 
-    const submitHandler=useCallback((e)=>{
+    const submitHandler=useCallback(async (e)=>{
         e.preventDefault()
-        // fetch.post('',{
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify(formData)
-        // })
-        console.log(formData)
+        props.onAddNewMovie(formData)
         setFormData({
             title:'',
             openingText:'',
             releaseDate:''
         })
-    },[formData])
+    },[formData, props])
 
     return (
     <>

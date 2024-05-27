@@ -14,22 +14,20 @@ function App() {
 
   const getMoviesHandler = useCallback(async () => {
     try {
-      console.log('executed getMoviesHandler')
-      let resp = await fetch('https://swapi.dev/api/films');
+      let resp = await fetch('https://react-http-109f0-default-rtdb.firebaseio.com/movies.json');
       if (!resp.ok) {
         throw new Error('Something went wrong!! Retrying...')
       }
       setLoading(true)
-      let data = await resp.json();
-      console.log(data);
+      let data = await resp.json(); // object of objects
+
+      for (const key in data) {
+        data[key].id = key
+      }
+      const loadedMovies = Object.values(data)
+      setMovies(loadedMovies);
       setLoading(false)
-      setMovies(data.results);
     } catch (error) {
-      // const id=setInterval(()=>{
-      //   if(retrying)
-      //     getMoviesHandler()
-      // },5000)
-      // localStorage.setItem('id',id)
       setisError(true)
       setError(error.message)
     }
@@ -40,19 +38,46 @@ function App() {
   }, [getMoviesHandler])
 
 
-  const cancelRetryingHandler = (e) => {
+  const cancelRetryingHandler = useCallback((e) => {
     e.preventDefault()
-    // console.log('clicked cancel')
-    // clearInterval(localStorage.getItem('id'))
     setisError(false)
     setRetrying(prevState => !prevState)
+  },[])
+
+  const addNewMovie = useCallback(async (formData) => {
+    const response = await fetch('https://react-http-109f0-default-rtdb.firebaseio.com/movies.json', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    })
+    if (response.ok) {
+      const data = await response.json()
+      setMovies([...movies, formData])
+      console.log(data)
+    }
+  },[movies])
+
+  const deleteMovie = async (id) => {
+    const response = await fetch(`https://react-http-109f0-default-rtdb.firebaseio.com/movies/${id}.json`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    if (response.ok) {
+      await response.json()
+      const updatedMovies = movies.filter((movie) => movie.id !== id)
+      setMovies(updatedMovies)
+    }
   }
 
 
   return (
     <React.Fragment>
       <section>
-        <NewMovieForm />
+        <NewMovieForm onAddNewMovie={addNewMovie} />
       </section>
       <section>
         {loading && !retrying && <h1>Loading... Please wait</h1>}
@@ -60,7 +85,7 @@ function App() {
       </section>
       <section>
         {isError && retrying && <><h1>Error Occurred: {error}</h1><button onClick={cancelRetryingHandler}>Cancel Retrying</button></>}
-        <MoviesList movies={movies} />
+        <MoviesList movies={movies} onDeleteMovie={deleteMovie} />
       </section>
     </React.Fragment>
   );
