@@ -37,12 +37,39 @@ function App() {
     getMoviesHandler()
   }, [getMoviesHandler])
 
+  useEffect(() => {
+    if (isError) {
+      clearInterval(interval)
+      interval = setInterval(() => getMoviesHandler(), 1000)
+    }
+    return () => {
+      clearInterval(interval)
+    }
+  }, [isError, getMoviesHandler])
+
+  // export const retryFunction = async (promise, maxRetries, retryWait) => {
+  //   let numberOfTries = 0;
+  //   while (true) {
+  //     try {
+  //       const res = await promise;
+  //       return res;
+  //     } catch (err) {
+  //       numberOfTries += 1;
+  //          if (numberOfTries === maxRetries) {
+  //         throw err;
+  //       }
+
+  //       await new Promise((resolve) => setTimeout(resolve, retryWait));
+  //     }
+  //   }
+  // };
+
 
   const cancelRetryingHandler = useCallback((e) => {
     e.preventDefault()
     setisError(false)
     setRetrying(prevState => !prevState)
-  },[])
+  }, [])
 
   const addNewMovie = useCallback(async (formData) => {
     const response = await fetch('https://react-http-109f0-default-rtdb.firebaseio.com/movies.json', {
@@ -57,7 +84,7 @@ function App() {
       setMovies([...movies, formData])
       console.log(data)
     }
-  },[movies])
+  }, [movies])
 
   const deleteMovie = async (id) => {
     const response = await fetch(`https://react-http-109f0-default-rtdb.firebaseio.com/movies/${id}.json`, {
@@ -84,8 +111,8 @@ function App() {
         <button onClick={getMoviesHandler}>Fetch Movies</button>
       </section>
       <section>
-        {isError && retrying && <><h1>Error Occurred: {error}</h1><button onClick={cancelRetryingHandler}>Cancel Retrying</button></>}
-        <MoviesList movies={movies} onDeleteMovie={deleteMovie} />
+        {isError && <h1>Error Occurred: {error}</h1>}
+        {retrying && <button onClick={cancelRetryingHandler}>Cancel Retrying</button>}        <MoviesList movies={movies} onDeleteMovie={deleteMovie} />
       </section>
     </React.Fragment>
   );
